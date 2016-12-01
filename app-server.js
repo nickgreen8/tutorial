@@ -6,6 +6,14 @@ var connections = [];
 var title = 'Untitled Presentation';
 var audience = [];
 var speaker = {};
+var questions = require('./app-questions');
+var currentQuestion = false;
+var results = {
+	a: 0,
+	b: 0,
+	c: 0,
+	d: 0
+}
 
 app.use(express.static('./public'));
 app.use(express.static('./node_modules/bootstrap/dist'));
@@ -20,6 +28,13 @@ io.sockets.on('connection', function(socket) {
 			audience.splice(audience.indexOf(member), 1);
 			io.sockets.emit('audience', audience);
 			console.log('Left: %s (%s audience members)', member.name, audience.length);
+		} else if (this.id === speaker.id) {
+			console.log('%s has left. "%s" is over.', speaker.name, title);
+
+			speaker = {};
+			title = 'Untitled Presentation';
+
+			io.sockets.emit('end', { title: title, speaker: '' });
 		}
 
 		connections.splice(connections.indexOf(socket), 1);
@@ -51,8 +66,20 @@ io.sockets.on('connection', function(socket) {
 		console.log('Presentation Started: "%s" by %s', title, speaker.name);
 	});
 
+	socket.on('ask', function(question) {
+		currentQuestion = question;
+		io.sockets.emit('ask', currentQuestion);
+		console.log('Question asked: "%s"', question.q);
+	});
+
+	
+
 	socket.emit('welcome', {
-		title: title
+		title: title,
+		audience: audience,
+		speaker: speaker.name,
+		questions: questions,
+		currentQuestion: currentQuestion
 	});
 
 	connections.push(socket);

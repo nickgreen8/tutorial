@@ -12,7 +12,9 @@ var Dashboard = React.createClass({
 			title: '',
 			member: {},
 			audience: [],
-			speaker: {}
+			speaker: '',
+			questions: [],
+			currentQuestion: false
 		}
 	},
 
@@ -22,9 +24,12 @@ var Dashboard = React.createClass({
 		//Event listeners
 		this.socket.on('connect', this.connect);
 		this.socket.on('disconnect', this.disconnect);
-		this.socket.on('welcome', this.welcome);
+		this.socket.on('welcome', this.updateState);
 		this.socket.on('joined', this.joined);
 		this.socket.on('audience', this.updateAudience);
+		this.socket.on('start', this.start);
+		this.socket.on('end', this.updateState);
+		this.socket.on('ask', this.ask);
 	},
 
 	emit(eventName, payload) {
@@ -35,17 +40,23 @@ var Dashboard = React.createClass({
 		this.setState({ status: 'connected' });
 
 		var member = (sessionStorage.member) ? JSON.parse(sessionStorage.member) : null;
-		if (member) {
+		if (member && member.type === 'audience') {
 			this.emit('join', member);
+		} else if (member && member.type === 'speaker') {
+			this.emit('start', { name: member.name, title: sessionStorage.title });
 		}
 	},
 
 	disconnect() {
-		this.setState({ status: 'disconnected' });
+		this.setState({
+			status: 'disconnected',
+			title: 'disconnected',
+			speaker: ''
+		});
 	},
 
-	welcome(serverState) {
-		this.setState({ title: serverState.title });
+	updateState(serverState) {
+		this.setState(serverState);
 	},
 
 	joined(member) {
@@ -57,10 +68,21 @@ var Dashboard = React.createClass({
 		this.setState({ audience: newAudience });
 	},
 
+	start(presentation) {
+		if (this.state.member.type === 'speaker') {
+			sessionStorage.title = presentation.title;
+		}
+		this.setState(presentation);
+	},
+
+	ask(question) {
+		this.setState({ currentQuestion: question });
+	},
+
 	render() {
 		return (
 			<div>
-				<Header title={this.state.title} status={this.state.status} />
+				<Header {...this.state} />
 				<RouteHandler emit={this.emit} {...this.state} />
 			</div>
 		);
