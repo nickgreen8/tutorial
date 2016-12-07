@@ -8,7 +8,7 @@ var Questions = React.createClass({
 	addQuestion(question, i) {
 		return (
 			<div key={i} className="col-xs-12 col-sm-6 col-ms-3">
-				<h3 onClick={this.ask.bind(null, question)}>{question.q}</h3>
+				<span onClick={this.ask.bind(null, question)}>{question.q}</span>
 			</div>
 		);
 	},

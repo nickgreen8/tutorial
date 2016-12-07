@@ -24,6 +24,7 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', function(socket) {
 	socket.once('disconnect', function () {
 		var member = _.findWhere(audience, { id: this.id });
+
 		if (member) {
 			audience.splice(audience.indexOf(member), 1);
 			io.sockets.emit('audience', audience);
@@ -46,7 +47,7 @@ io.sockets.on('connection', function(socket) {
 		var newMember = {
 			id: this.id,
 			name: payload.name,
-			type: 'member'
+			type: 'audience'
 		};
 		this.emit('joined', newMember);
 		audience.push(newMember);
@@ -68,18 +69,24 @@ io.sockets.on('connection', function(socket) {
 
 	socket.on('ask', function(question) {
 		currentQuestion = question;
+		results = { a: 0, b: 0, c: 0, d: 0 };
 		io.sockets.emit('ask', currentQuestion);
 		console.log('Question asked: "%s"', question.q);
 	});
 
-	
+	socket.on('answer', function(payload) {
+		results[payload.choice]++;
+		io.sockets.emit('results', results);
+		console.log('Answer: "%s" - %j', payload.choice, results);
+	});
 
 	socket.emit('welcome', {
 		title: title,
 		audience: audience,
 		speaker: speaker.name,
 		questions: questions,
-		currentQuestion: currentQuestion
+		currentQuestion: currentQuestion,
+		results: results
 	});
 
 	connections.push(socket);

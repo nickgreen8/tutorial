@@ -14,7 +14,8 @@ var Dashboard = React.createClass({
 			audience: [],
 			speaker: '',
 			questions: [],
-			currentQuestion: false
+			currentQuestion: false,
+			results: {}
 		}
 	},
 
@@ -30,6 +31,7 @@ var Dashboard = React.createClass({
 		this.socket.on('start', this.start);
 		this.socket.on('end', this.updateState);
 		this.socket.on('ask', this.ask);
+		this.socket.on('results', this.updateResults);
 	},
 
 	emit(eventName, payload) {
@@ -76,7 +78,15 @@ var Dashboard = React.createClass({
 	},
 
 	ask(question) {
-		this.setState({ currentQuestion: question });
+		sessionStorage.answer = '';
+		this.setState({
+			currentQuestion: question,
+			results: {a:0, b:0, c:0, d:0}
+		});
+	},
+
+	updateResults(data) {
+		this.setState({ results: data });
 	},
 
 	render() {
